@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Billing;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -13,7 +14,7 @@ class BillingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $max_user_per_bill = 10;
+//    private $max_user_per_bill = 10;
     /**
      * Create a new job instance.
      *
@@ -31,8 +32,10 @@ class BillingJob implements ShouldQueue
      */
     public function handle()
     {
-        Billing::notBilled()->get()->chunk($this->max_user_per_bill, function($billing_info){
-            $requestBody = array();
+        Billing::notBilled()->chunk(10, function(Collection $billing_info) {
+            // at this line billing_info is a collection.
+            // And the Eloquent/Collection does not have update method
+            $requestBody = [];
 
             $billing_info->each( function($user) use (&$requestBody){
                 $requestBody[] =
@@ -42,8 +45,9 @@ class BillingJob implements ShouldQueue
                     ];
             });
 
-            // call the thirdParty api
+
             /*
+             * call the thirdParty api
              * THIS IS A MOCK OF THE API CALL
              *
              * BillIngApiServer::billUser($requestBody);
@@ -51,12 +55,13 @@ class BillingJob implements ShouldQueue
 
 
             // update the billing table to show which account was has been billed
-            $billing_info->update(
-                [
+            $billing_info->each(function(Billing $billing) {
+                $billing->update([
                     'billed' => 1,
                     'bill_date' => now()
-                ]
-            );
+                ]);
+            });
+
         });
     }
 }
