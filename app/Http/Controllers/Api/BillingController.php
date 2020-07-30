@@ -14,20 +14,20 @@ class BillingController extends Controller
 {
     /**
      *
-     * @return Json
+     *
      * This method sends the billing request to the BillingJob
      * and then returns a string response to the user
      * while the task is dispatched ater 10 minutes
      */
     public function billAccount(){
             // call the job
-           BillingJob::dispatch()
-               ->onConnection('database')
-               ->delay(now()->addSecond(10));
+        BillingJob::dispatch()
+            ->onConnection('database')
+            ->delay(now()->addSeconds(2));
 
 
 
-           return response()
+        return response()
                ->json('Billing request Status Notification was send to your Email', 200);
     }
 }

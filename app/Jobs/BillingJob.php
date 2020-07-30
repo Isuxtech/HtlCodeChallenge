@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Billing;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -35,34 +36,34 @@ class BillingJob implements ShouldQueue
      */
     public function handle()
     {
-           Billing::notBilled()->chunk(5, function(Collection $billing_info) {
+        $billings = Billing::notBilled()->get();
+
+        foreach ($billings->chunk(5) as $billing_info) {
             // at this line billing_info is a collection.
             // And the Eloquent/Collection does not have update method
             $requestBody = [];
 
+            /** @var $billing_info Collection */
             $billing_info->each( function($user) use (&$requestBody){
-                $requestBody[] =
-                    [
+                $requestBody[] = [
                         'username' => $user->username,
                         'amount_to_bill' => $user->amount_to_bill
                     ];
             });
 
-
-            /**
-             * call the thirdParty api
-             * THIS IS A MOCK OF THE API CALL
-             *
-             * BillIngApiServer::billUser($requestBody);
-             */
+            // call the thirdParty api
+            // THIS IS A MOCK OF THE API CALL
+            $this->billUser($requestBody);
 
 
-               /**
-                * Loops through the collection and updates the Billing table to show with
-                * record was send for billing assuming that all send records will be
-                * billed successfully
-                */
-            // update the billing table to show which account was has been billed
+
+           /*
+            * Loops through the collection and updates the Billing table to show with
+            * record was send for billing assuming that all send records will be
+            * billed successfully
+            * update the billing table to show which account was has been billed
+            */
+
             $billing_info->each(function(Billing $billing) {
                 $billing->update([
                         'billed' => 1,
@@ -70,6 +71,11 @@ class BillingJob implements ShouldQueue
                     ]);
             });
 
-        });
+        }
+    }
+
+    private function billUser(array $requestBody)
+    {
+        // TODO API call to third party
     }
 }

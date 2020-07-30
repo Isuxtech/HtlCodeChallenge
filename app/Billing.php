@@ -13,6 +13,6 @@ class Billing extends Model
      * this scope filters all records that was marked as 'not billed' (0) in the billings table
      */
     public function scopeNotBilled($query){
-        $query->where('billed', 0);
+        $query->where('billed', '0');
     }
 }
