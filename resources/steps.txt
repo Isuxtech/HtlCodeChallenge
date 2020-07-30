@@ -1,0 +1,7 @@
+STEPS:
+
+1 create billing table migration
+2. seeder, factory
+3. create api
+4. create job
+5. test
